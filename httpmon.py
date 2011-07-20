@@ -14,7 +14,7 @@ SMTPSERVER = 'localhost'
 SMTPPORT = 25
 
 # default from address
-FROM = 'httpmon@localhost'
+FROM = 'httpmon@davidfischer.github.com'
 
 USAGE = """%prog [options] url1 url2 ...
 
@@ -65,7 +65,7 @@ def email_notify(subject, txt, address, use_tls):
         s.ehlo()
     if len(SMTPUSER) > 0:
         s.login(SMTPUSER, SMTPPASS)
-    s.sendmail(FROM, options.address, msg.as_string())
+    s.sendmail(FROM, address, msg.as_string())
     s.quit()
 
 if __name__ == '__main__':
