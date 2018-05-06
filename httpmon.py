@@ -1,7 +1,7 @@
-#!/usr/bin/env python26
 from optparse import OptionParser
 import smtplib
-import urllib2
+from urllib.request import urlopen
+from urllib.error import URLError, HTTPError
 from email.mime.text import MIMEText
 
 TIMEOUT = 30
@@ -13,12 +13,12 @@ SMTPPASS = ''
 SMTPSERVER = 'localhost'
 SMTPPORT = 25
 
-# default from address
+# Default from address
 FROM = 'httpmon@davidfischer.github.com'
-
 USAGE = """%prog [options] url1 url2 ...
 
 Check the HTTP status code of each URL to verify if the site is up"""
+
 
 def main():
     parser = OptionParser(USAGE)
@@ -32,32 +32,33 @@ def main():
 
     # check each URL
     for url in args:
+        
         try:
-            f = urllib2.urlopen(url, timeout=options.timeout)
+            f = urlopen(url, timeout=options.timeout)
             code = f.code
             body = str(f.headers)
             msg = f.msg
             f.close()
-        except (urllib2.URLError, urllib2.HTTPError), e:
+        except (URLError, HTTPError) as e:
             msg = 'Unknown'
             body = str(getattr(e, 'reason', '?'))
             code = getattr(e, 'code', 0)
     
-        print "%s - %s" %(msg, url)
+        print("{} - {}".format(msg, url))
     
         if code != _OK:
-            subject = '[DOWNTIME] %s' %url
-            msg = 'Status code: %s\n\n%s\n%s\n\n' %(code, msg, body)
+            subject = '[DOWNTIME] {}'.format(url)
+            msg = 'Status code: {}\n\n{}\n{}\n\n'.format(code, msg, body)
             if len(options.address) > 0:
                 email_notify(subject, msg, options.address, options.tls)
 
 def email_notify(subject, txt, address, use_tls):
+    """ Send the email via your own SMTP Server """
     msg = MIMEText(txt)
     msg['Subject'] = subject
     msg['From'] = FROM
     msg['To'] = list().append(address)
 
-    # Send the email via our own SMTP server.
     s = smtplib.SMTP(SMTPSERVER, SMTPPORT)
     if use_tls:
         s.ehlo()
